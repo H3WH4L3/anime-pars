@@ -6,36 +6,34 @@ from anime_parsers_ru import KodikParser
 parser = KodikParser()
 
 # Прописываем искомый тайтл
-title = input("Впиши наименование тайтла: ")
+title = "Магическая битва"
 
-# Находим всю информацию по наименованию
-results = parser.search(title=title)
-with open("test.txt", "w", encoding="utf-8") as file:
-    json.dump(results, file, ensure_ascii=False, indent=2)
+# Находим нужные ID и года
+first_search_result = parser.search(title=title)
 
-# Формируем словарь из "results" в читаемый вид
-converted_result = {
+# Формируем словарь из "first_search_result" в читаемый вид
+first_search_result = {
     element["title"]: {
         "Год": element["year"],
-        "Тип": "Сериал" if element["type"] == "anime-serial" else "Фильм",
-        "ID Платформ": {
-            "Шикомори": element["shikimori_id"],
-            "Кинопоиск": element["kinopoisk_id"],
-            "IMDB": element["imdb_id"],
-        },
+        "ID": element["shikimori_id"],
     }
-    for element in results
+    for element in first_search_result
 }
 
 # Сортируем словарь по годам
-sorted_result = dict(sorted(converted_result.items(), key=lambda x: x[1]["Год"]))
+final_result = dict(sorted(first_search_result.items(), key=lambda x: x[1]["Год"]))
 
-# Записываем все в читабельный JSON формат
-with open("anime_list.json", "w", encoding="utf-8") as file:
-    json.dump(sorted_result, file, ensure_ascii=False, indent=2)
+# Формирую словарь со всей информацией
+for key, value in final_result.items():
+    response = parser.api_request(
+        endpoint="search", filters={"shikimori_id": value["ID"]}
+    )
+    test = {}
+    for element in response["results"]:
+        translation = element["translation"]
+        test[translation["title"]] = translation["id"]
+    final_result[key]["Количество серий"] = response["results"][0]["episodes_count"]
+    final_result[key]["Переводы"] = test
 
-# Выводим краткую информацию
-with open("anime_list.json", "r", encoding="utf-8") as file:
-    data = json.load(file)
-    for key, value in data.items():
-        print(f"{key}:\n-Год: {value["Год"]}\n-Формат: {value["Тип"]}\n")
+with open("anime_list.json", "w", encoding="UTF-8") as file:
+    json.dump(final_result, file, ensure_ascii=False, indent=2)
