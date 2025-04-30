@@ -1,5 +1,5 @@
 import json
-
+from get_link import get_link
 from anime_parsers_ru import KodikParser
 
 # Инициализация парсера
@@ -7,6 +7,7 @@ parser = KodikParser()
 
 # Прописываем искомый тайтл
 title = "Магическая битва"
+
 
 # Находим нужные ID и года
 first_search_result = parser.search(title=title)
@@ -37,3 +38,17 @@ for key, value in final_result.items():
 
 with open("anime_list.json", "w", encoding="UTF-8") as file:
     json.dump(final_result, file, ensure_ascii=False, indent=2)
+
+
+#Костыль доработки
+print("Название: ", title)
+
+print("Кол-во серий: ", final_result["Магическая битва [ТВ-1]"]["Количество серий"])
+
+input_seria = input("Введите номер серии: ")
+
+id_anime = final_result["Магическая битва [ТВ-1]"]["ID"]
+id_translate = final_result["Магическая битва [ТВ-1]"]["Переводы"]["Studio Band"]
+
+result = get_link(id_anime, id_translate, int(input_seria))
+print(result)
