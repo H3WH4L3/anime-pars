@@ -1,54 +1,51 @@
 import json
-from get_link import get_link
+import os
+
 from anime_parsers_ru import KodikParser
+
+from scripts.anime_title_choise import clean_json
+from scripts.choise_title import get_json_titles
+from scripts.get_link import get_link
+from scripts.get_translations import get_translations
 
 # Инициализация парсера
 parser = KodikParser()
 
 # Прописываем искомый тайтл
-title = "Магическая битва"
+title = input("Введите тайтл: ")
 
+# Формируем первый список
+get_json_titles(title)
 
-# Находим нужные ID и года
-first_search_result = parser.search(title=title)
+# Выводим список
+with open("temp_list.json", "r", encoding="UTF-8") as file:
+    data = json.load(file)
+    for i, (key, value) in enumerate(data.items()):
+        print(
+            f"{i + 1}. {key}\n  - Количество серий: {value["Количество серий"]}\n  - Год: {value["Год"]}\n"
+        )
 
-# Формируем словарь из "first_search_result" в читаемый вид
-first_search_result = {
-    element["title"]: {
-        "Год": element["year"],
-        "ID": element["shikimori_id"],
-    }
-    for element in first_search_result
-}
+# Номер тайтла
+anime_choise = int(input("Укажите номер тайтла из списка: "))
 
-# Сортируем словарь по годам
-final_result = dict(sorted(first_search_result.items(), key=lambda x: x[1]["Год"]))
+# Оставляем один результат
+temp_anime_dict = clean_json(anime_choise)
 
-# Формирую словарь со всей информацией
-for key, value in final_result.items():
-    response = parser.api_request(
-        endpoint="search", filters={"shikimori_id": value["ID"]}
-    )
-    test = {}
-    for element in response["results"]:
-        translation = element["translation"]
-        test[translation["title"]] = translation["id"]
-    final_result[key]["Количество серий"] = response["results"][0]["episodes_count"]
-    final_result[key]["Переводы"] = test
+# Фиксируем ID
+anime_id = list(temp_anime_dict.values())[0]["ID"]
 
-with open("anime_list.json", "w", encoding="UTF-8") as file:
-    json.dump(final_result, file, ensure_ascii=False, indent=2)
+# Фиксируем номер серии
+seria = int(input("Укажите номер серии: "))
 
+# Выводим переводы
+print(get_translations(temp_anime_dict))
 
-#Костыль доработки
-print("Название: ", title)
+# Устанавливаем ID перевода
+traslations_number = int(input("Укажите номер перевода: "))
+traslations_id = get_translations(temp_anime_dict, traslations_number)
 
-print("Кол-во серий: ", final_result["Магическая битва [ТВ-1]"]["Количество серий"])
+# Выводим ссылку
+print(get_link(anime_id, traslations_id, seria))
 
-input_seria = input("Введите номер серии: ")
-
-id_anime = final_result["Магическая битва [ТВ-1]"]["ID"]
-id_translate = final_result["Магическая битва [ТВ-1]"]["Переводы"]["Studio Band"]
-
-result = get_link(id_anime, id_translate, int(input_seria))
-print(result)
+# Удаляем временный json
+os.remove("temp_list.json")
