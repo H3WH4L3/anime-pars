@@ -3,7 +3,7 @@ import os
 
 from anime_parsers_ru import KodikParser
 
-from scripts.anime_title_choise import clean_json
+from scripts.final_title import clean_json
 from scripts.choise_title import get_json_titles
 from scripts.get_link import get_link
 from scripts.get_translations import get_translations
@@ -48,4 +48,4 @@ traslations_id = get_translations(temp_anime_dict, traslations_number)
 print(get_link(anime_id, traslations_id, seria))
 
 # Удаляем временный json
-os.remove("temp_list.json")
+# os.remove("temp_list.json")
